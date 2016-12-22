@@ -13,15 +13,15 @@ class Model:
         return (abs(self.x - other.x) <= hit_size) and (abs(self.y - other.y) <= hit_size)
 
 class World:
-    NUM_HUMAN = 20
     def __init__(self, width, height):
+        self.NUM_HUMAN = 20
         self.width = width
         self.height = height
         self.zombie = Zombie(self,100, 100)
         self.human = []
         self.bullet = []
         self.human_speedX = []
-        for i in range(World.NUM_HUMAN):
+        for i in range(self.NUM_HUMAN):
             human = Human(self, randint(self.width/2, self.width - 1), randint(self.height/2, self.height - 46),0,0,self.zombie)
             human.random_direction()
             self.human.append(human)
@@ -32,12 +32,26 @@ class World:
         self.score = 0
         self.total_time = 0
         self.live = 5
+        self.delta_time = int(self.total_time)
+        self.delta_time_spawn = int(self.total_time)
  
     def animate(self, delta):
         self.total_time += delta
+        if (int(self.total_time)-self.delta_time) >= 15:
+            self.live += 1
+            self.delta_time = int(self.total_time)
+        if (int(self.total_time)-self.delta_time_spawn) >= 60:
+            self.delta_time_spawn = int(self.total_time)
+            for i in range(5):
+                human = Human(self, randint(self.width/2, self.width - 1), randint(self.height/2, self.height - 46),0,0,self.zombie)
+                human.random_direction()
+                self.human.append(human)
+                self.human_speedX.append(self.human[i].vx)
+                bullet = Bullet(self, self.human[i].x, self.human[i].y,self.zombie)
+                self.bullet.append(bullet)
+            self.NUM_HUMAN += 5
         self.zombie.animate(delta)
-
-        for i in range(World.NUM_HUMAN):
+        for i in range(self.NUM_HUMAN):
             self.human[i].animate(delta)
             self.human_speedX[i] = self.human[i].vx
             if self.zombie.hit(self.human[i], 20):
@@ -122,9 +136,17 @@ class Human(Model):
         self.zombie = zombie
 
     def random_direction(self):
-        self.vx = 7 * uniform(-1,1)
-        self.vy = 7 * uniform(-1,1)
-
+        self.vx = 3*uniform(-1,1)
+        self.vy = 3*uniform(-1,1)
+        if self.vx > 0:
+            self.vx += 3
+        if self.vx < 0:
+            self.vx -= 3
+        if self.vy > 0:
+            self.vy += 3
+        if self.vy < 0:
+            self.vy -= 3
+                
     def random_location(self):
         self.x = randint(0, self.world.width - 1)
         self.y = randint(0, self.world.height - 1)
@@ -177,6 +199,8 @@ class Bullet(Model):
             self.vy = self.SPEED
 
     def animate(self, delta):
+        if (int(self.world.total_time)-self.world.delta_time_spawn)%30 == 0 and self.SPEED <= 6:
+            self.SPEED += 1
         self.x += self.vx   
         self.y += self.vy
         if (self.time_back < 0) and ((self.x > self.world.width) or (self.x < 0) or (self.y > self.world.height-50) or (self.y < 0)):
