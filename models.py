@@ -1,5 +1,5 @@
 import arcade.key
-from math import atan2 , degrees
+from math import atan2 , degrees,sin,cos
 from random import randint, uniform
 
 class Model:
@@ -11,6 +11,7 @@ class Model:
 
     def hit(self, other, hit_size):
         return (abs(self.x - other.x) <= hit_size) and (abs(self.y - other.y) <= hit_size)
+
 
 class World:
     def __init__(self, width, height):
@@ -37,19 +38,7 @@ class World:
  
     def animate(self, delta):
         self.total_time += delta
-        if (int(self.total_time)-self.delta_time) >= 15:
-            self.live += 1
-            self.delta_time = int(self.total_time)
-        if (int(self.total_time)-self.delta_time_spawn) >= 60:
-            self.delta_time_spawn = int(self.total_time)
-            for i in range(5):
-                human = Human(self, randint(self.width/2, self.width - 1), randint(self.height/2, self.height - 46),0,0,self.zombie)
-                human.random_direction()
-                self.human.append(human)
-                self.human_speedX.append(self.human[i].vx)
-                bullet = Bullet(self, self.human[i].x, self.human[i].y,self.zombie)
-                self.bullet.append(bullet)
-            self.NUM_HUMAN += 5
+        self.time_change()
         self.zombie.animate(delta)
         for i in range(self.NUM_HUMAN):
             self.human[i].animate(delta)
@@ -58,7 +47,6 @@ class World:
                 self.human[i].random_location()
                 self.score += 1
                 self.human[i].random_direction()
-
             self.bullet[i].animate(delta)
             if self.zombie.hit(self.bullet[i], 15) and self. bullet[i].alive == 1:
                 self.bullet[i].alive = 0
@@ -88,6 +76,21 @@ class World:
             self.zombie.DIRECTION[2] = 0
         if key == arcade.key.DOWN:
             self.zombie.DIRECTION[3] = 0
+
+    def time_change(self):
+        if (int(self.total_time)-self.delta_time) >= 15:
+            self.live += 1
+            self.delta_time = int(self.total_time)
+        if (int(self.total_time)-self.delta_time_spawn) >= 60:
+            self.delta_time_spawn = int(self.total_time)
+            for i in range(5):
+                human = Human(self, randint(self.width/2, self.width - 1), randint(self.height/2, self.height - 46),0,0,self.zombie)
+                human.random_direction()
+                self.human.append(human)
+                self.human_speedX.append(self.human[i].vx)
+                bullet = Bullet(self, self.human[i].x, self.human[i].y,self.zombie)
+                self.bullet.append(bullet)
+            self.NUM_HUMAN += 5
 
 
 class Zombie(Model):
@@ -128,6 +131,7 @@ class Zombie(Model):
         self.x += self.SPEED_X
         self.xkeep = self.x
 
+
 class Human(Model):
     def __init__(self, world, x, y,vx,vy,zombie):
         super().__init__(world, x, y, 0)
@@ -152,10 +156,12 @@ class Human(Model):
         self.y = randint(0, self.world.height - 1)
 
     def animate(self, delta):
-##        if (self.x < 0) or (self.x > self.world.width):
-##            self.vx = - self.vx
-##        if (self.y < 0) or (self.y > self.world.height):
-##            self.vy = - self.vy
+        self.border()
+        self.near_zombie()
+        self.x += self.vx   
+        self.y += self.vy
+
+    def border(self):
         if self.y > self.world.height-50:
             self.y = 0
         if self.y < 0:
@@ -165,6 +171,7 @@ class Human(Model):
         if self.x < 0:
             self.x = self.world.width
 
+    def near_zombie(self):
         if (self.x > self.zombie.x-100) and (self.x < self.zombie.x) and (self.y > self.zombie.y-100) and (self.y < self.zombie.y+100):
             if self.vx > 0:
                 self.vx = - self.vx
@@ -178,25 +185,13 @@ class Human(Model):
             if self.vy < 0:
                 self.vy = - self.vy
 
-        self.x += self.vx   
-        self.y += self.vy
-
+                
 class Bullet(Model):
     SPEED = 4
     def __init__(self, world, x, y,zombie):
         super().__init__(world, x, y, 0)
         self.zombie = zombie
-        self.alive = 1
-        self.time_back = 0
-        self.angle = 180 + degrees(atan2((self.zombie.y-self.y),(self.zombie.x-self.x)))
-        if self.x >= self.zombie.x:
-            self.vx = -self.SPEED
-        if self.x < self.zombie.x:
-            self.vx = self.SPEED
-        if self.y >= self.zombie.y:
-            self.vy = -self.SPEED
-        if self.y < self.zombie.y:
-            self.vy = self.SPEED
+        self.shoot(x,y)
 
     def animate(self, delta):
         if (int(self.world.total_time)-self.world.delta_time_spawn)%30 == 0 and self.SPEED <= 6:
@@ -215,10 +210,10 @@ class Bullet(Model):
         self.y = human_y
         self.angle = 180 + degrees(atan2((self.zombie.y-self.y),(self.zombie.x-self.x)))
         if self.x >= self.zombie.x:
-            self.vx = -3
+            self.vx = -self.SPEED
         if self.x < self.zombie.x:
-            self.vx = 3
+            self.vx = self.SPEED
         if self.y >= self.zombie.y:
-            self.vy = -3
+            self.vy = -self.SPEED
         if self.y < self.zombie.y:
-            self.vy = 3
+            self.vy = self.SPEED
