@@ -1,4 +1,5 @@
 import arcade.key
+from math import atan2 , degrees
 from random import randint, random
 
 class Model:
@@ -13,14 +14,18 @@ class Model:
 
 class World:
 ##    NUM_ASTEROID = 20
-
     def __init__(self, width, height):
         self.width = width
         self.height = height
         self.zombie = Zombie(self,100, 100)
         self.human = Human(self, 400, 400,0,0,self.zombie)
+        self.bullet = Bullet(self, self.human.x, self.human.y,self.zombie,self.human)
+        
+        self.DIR_PIC = 1
         self.score = 0
-
+        self.total_time = 0
+        self.live = 5
+        
         self.human.random_direction()
 ##        self.asteroids = []
 ##        for i in range(World.NUM_ASTEROID):
@@ -29,14 +34,20 @@ class World:
 ##            self.asteroids.append(asteroid)
  
     def animate(self, delta):
+        self.total_time += delta
         self.zombie.animate(delta)
         self.human.animate(delta)
+        self.bullet.animate(delta)
         if self.zombie.hit(self.human, 15):
             self.human.random_location()
             self.score += 1
             self.human.random_direction()
-
-            
+        if self.zombie.hit(self.bullet, 15):
+            self.bullet.alive = 0
+            self.live -= 1
+        if self.bullet.alive == 0 and self.bullet.time_back <= 0 :
+            self.bullet.shoot()
+        
 ##        for asteroid in self.asteroids:
 ##            asteroid.animate(delta)
 ##            if self.ship.hit(asteroid, 10):
@@ -49,8 +60,10 @@ class World:
     def on_key_press(self, key, key_modifiers):
         if key == arcade.key.LEFT:
             self.zombie.DIRECTION[0] = 1
+            self.DIR_PIC = 0
         if key == arcade.key.RIGHT:
             self.zombie.DIRECTION[1] = 1
+            self.DIR_PIC = 1
         if key == arcade.key.UP:
             self.zombie.DIRECTION[2] = 1
         if key == arcade.key.DOWN:
@@ -69,20 +82,18 @@ class World:
 
 class Zombie(Model):
     DIRECTION = [0,0,0,0]  # LEFT RIGHT UP DOWN
-    DIR_PIC = 1
     SPEED_X = 0
     SPEED_Y = 0
     xkeep = 650;
     def __init__(self, world, x, y):
         self.world = world
         super().__init__(world, x, y, 0)
+        self.DIR_PIC = 1    
         
     def walk(self):
         if self.DIRECTION[0] == 1: # LEFT
-            self.DIR_PIC = 0
             self.SPEED_X = -5
         if self.DIRECTION[1] == 1: # RIGHT
-            self.DIR_PIC = 1
             self.SPEED_X = 5
         if self.DIRECTION[2] == 1: # UP
             self.SPEED_Y = 5
@@ -152,4 +163,42 @@ class Human(Model):
         self.x += self.vx   
         self.y += self.vy
 
+class Bullet(Model):
+    def __init__(self, world, x, y,zombie,human):
+        super().__init__(world, x, y, 0)
+        self.zombie = zombie
+        self.human = human
+        self.alive = 1
+        self.time_back = 0
+        self.angle = 180 + degrees(atan2((self.zombie.y-self.y),(self.zombie.x-self.x)))
+        if self.x >= self.zombie.x:
+            self.vx = -3
+        if self.x < self.zombie.x:
+            self.vx = 3
+        if self.y >= self.zombie.y:
+            self.vy = -3
+        if self.y < self.zombie.y:
+            self.vy = 3
 
+    def animate(self, delta):
+        self.x += self.vx   
+        self.y += self.vy
+        if (self.x > self.world.width) or (self.x < 0) or (self.y > self.world.height) or (self.y < 0):
+            self.alive = 0
+            self.time_back = 0
+        self.time_back -= 1
+
+    def shoot(self):
+        self.alive = 1
+        self.time_back = 0
+        self.x = self.human.x
+        self.y = self.human.y
+        self.angle = 180 + degrees(atan2((self.zombie.y-self.y),(self.zombie.x-self.x)))
+        if self.x >= self.zombie.x:
+            self.vx = -3
+        if self.x < self.zombie.x:
+            self.vx = 3
+        if self.y >= self.zombie.y:
+            self.vy = -3
+        if self.y < self.zombie.y:
+            self.vy = 3
