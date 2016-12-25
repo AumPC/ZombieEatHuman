@@ -18,16 +18,18 @@ class World:
         self.NUM_HUMAN = 20
         self.width = width
         self.height = height
-        self.zombie = Zombie(self,100, 100)
+        self.zombie = Zombie(self, 100, 100)
         self.human = []
         self.bullet = []
         self.human_speedX = []
         for i in range(self.NUM_HUMAN):
-            human = Human(self, randint(self.width/2, self.width - 1), randint(self.height/2, self.height - 46),0,0,self.zombie)
+            human = Human(self, randint(self.width/2, self.width - 1),
+                          randint(self.height/2, self.height - 46), 0,
+                          0, self.zombie)
             human.random_direction()
             self.human.append(human)
             self.human_speedX.append(self.human[i].vx)
-            bullet = Bullet(self, self.human[i].x, self.human[i].y,self.zombie)
+            bullet = Bullet(self, self.human[i].x, self.human[i].y, self.zombie)
             self.bullet.append(bullet)
         self.DIR_PIC = 1
         self.score = 0
@@ -84,11 +86,13 @@ class World:
         if (int(self.total_time)-self.delta_time_spawn) >= 60:
             self.delta_time_spawn = int(self.total_time)
             for i in range(5):
-                human = Human(self, randint(self.width/2, self.width - 1), randint(self.height/2, self.height - 46),0,0,self.zombie)
+                human = Human(self, randint(self.width/2, self.width - 1),
+                              randint(self.height/2, self.height - 46), 0,
+                              0, self.zombie)
                 human.random_direction()
                 self.human.append(human)
                 self.human_speedX.append(self.human[i].vx)
-                bullet = Bullet(self, self.human[i].x, self.human[i].y,self.zombie)
+                bullet = Bullet(self, self.human[i].x, self.human[i].y, self.zombie)
                 self.bullet.append(bullet)
             self.NUM_HUMAN += 5
 
@@ -97,7 +101,7 @@ class Zombie(Model):
     DIRECTION = [0,0,0,0]  # LEFT RIGHT UP DOWN
     SPEED_X = 0
     SPEED_Y = 0
-    SPEED = 8
+    SPEED = 11
     def __init__(self, world, x, y):
         self.world = world
         super().__init__(world, x, y, 0)
@@ -143,13 +147,13 @@ class Human(Model):
         self.vx = 3*uniform(-1,1)
         self.vy = 3*uniform(-1,1)
         if self.vx > 0:
-            self.vx += 3
+            self.vx += 2
         if self.vx < 0:
-            self.vx -= 3
+            self.vx -= 2
         if self.vy > 0:
-            self.vy += 3
+            self.vy += 2
         if self.vy < 0:
-            self.vy -= 3
+            self.vy -= 2
                 
     def random_location(self):
         self.x = randint(0, self.world.width - 1)
@@ -187,7 +191,7 @@ class Human(Model):
 
                 
 class Bullet(Model):
-    SPEED = 4
+    SPEED = 2.5
     def __init__(self, world, x, y,zombie):
         super().__init__(world, x, y, 0)
         self.zombie = zombie

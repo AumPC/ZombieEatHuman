@@ -22,11 +22,11 @@ class ModelSprite(arcade.Sprite):
 class SpaceGameWindow(arcade.Window):
     def __init__(self, width, height):
         super().__init__(width, height)
-        self.state = 1
+        self.state = 3
+        self.highscore = 0
         self.set_game(width, height)
         
     def set_game(self,width, height):
-        arcade.set_background_color(arcade.make_transparent_color(arcade.color.BLACK,0.5))
         self.world = World(width,height)
         self.zombie_sprite = ModelSprite('images/zombie.png',model=self.world.zombie)
         self.human_sprites = []
@@ -42,7 +42,6 @@ class SpaceGameWindow(arcade.Window):
             texture = arcade.load_texture('images/background_start.png')
             arcade.draw_texture_rectangle(self.width/2, self.height/2,
                                       texture.width, texture.height, texture, 0)
-            
         if self.state == 2:
             self.draw_bar()
             self.time_change()
@@ -59,11 +58,18 @@ class SpaceGameWindow(arcade.Window):
             elif self.world.DIR_PIC == 1: 
                 self.zombie_sprite = ModelSprite('images/zombie1.png',model=self.world.zombie)
             self.zombie_sprite.draw()
-            
         if self.state == 3:
             texture = arcade.load_texture('images/background_ending.png')
             arcade.draw_texture_rectangle(self.width/2, self.height/2,
                                       texture.width, texture.height, texture, 0)
+            arcade.draw_text("     SCORE : " + str(self.world.score),
+                         self.width/2-50, self.height - 50,
+                         arcade.color.PINK, 20)
+            if self.highscore < self.world.score:
+                self.highscore = self.world.score
+            arcade.draw_text("HIGHSCORE : " + str(self.highscore),
+                         self.width/2-50, self.height - 80,
+                         arcade.color.PINK, 20)
   
     def animate(self, delta):
         if self.state == 2:
@@ -89,7 +95,8 @@ class SpaceGameWindow(arcade.Window):
         texture = arcade.load_texture('images/background.jpg')
         arcade.draw_texture_rectangle(self.width/2, self.height/2,
                                       texture.width, texture.height, texture, 0)
-        arcade.draw_rectangle_filled(self.width/2, self.height-22.5,SCREEN_WIDTH , 45, arcade.color.BLACK)
+        arcade.draw_rectangle_filled(self.width/2, self.height-22.5,
+                                     SCREEN_WIDTH , 45, arcade.color.BLACK)
         texture = arcade.load_texture('images/heart.png')
         arcade.draw_text("LIVE : ",
                          self.width/2 - 85, self.height - 30,
